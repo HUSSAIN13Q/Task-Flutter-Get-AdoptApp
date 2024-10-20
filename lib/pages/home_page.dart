@@ -34,16 +34,41 @@ class HomePage extends StatelessWidget {
               },
               child: const Text("GET"),
             ),
-            GridView.builder(
-                shrinkWrap: true,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: MediaQuery.of(context).size.width /
-                      (MediaQuery.of(context).size.height),
-                ),
-                physics: const NeverScrollableScrollPhysics(), // <- Here
-                itemCount: pets.length,
-                itemBuilder: (context, index) => PetCard(pet: pets[index])),
+            FutureBuilder(  future: context.read<PetsProvider>().getPets(), // Asynchronously fetch pets from PetsProvider
+  builder: (context, dataSnapshot) {
+    if (dataSnapshot.connectionState == ConnectionState.waiting) {
+      // Display loading indicator while waiting for the future to resolve
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    } else {
+      if (dataSnapshot.error != null) {
+        // If an error occurs during fetching, display an error message
+        return const Center(
+          child: Text('An error occurred'),
+        );
+      } else {
+        // Once the future completes successfully, use Consumer to rebuild the UI when the PetsProvider updates
+        return Consumer<PetsProvider>(
+          builder: (context, petsProvider, child) => GridView.builder(
+            shrinkWrap: true, // Allows GridView to size itself based on content
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2, // Display 2 columns in the grid
+              childAspectRatio: MediaQuery.of(context).size.width /
+                  (MediaQuery.of(context).size.height), // Adjusts item ratio based on device size
+            ),
+            physics: const NeverScrollableScrollPhysics(), // Prevents the grid from being scrollable
+            itemCount: petsProvider.pets.length, // Number of pets to display in the grid
+            itemBuilder: (context, index) => PetCard(
+              pet: petsProvider.pets[index], // Build each pet's card using PetCarD widget
+              )));
+                    
+              }
+               }
+  }
+            ),
+          
+              
           ],
         ),
       ),
